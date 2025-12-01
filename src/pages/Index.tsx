@@ -214,33 +214,10 @@ const Index = () => {
             </div>
 
             {generatedPayloads && generatedPayloads.length > 0 ? (
-              <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
-                {generatedPayloads.map((payload, index) => (
-                  <div
-                    key={index}
-                    className="group relative animate-slide-in"
-                    style={{ animationDelay: `${index * 0.05}s` }}
-                  >
-                    <div className="code-editor bg-code-bg">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs text-primary font-semibold">
-                          Payload #{index + 1}
-                        </span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => copyToClipboard(JSON.stringify(payload, null, 2))}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity h-7 px-2"
-                        >
-                          <Copy className="w-3 h-3" />
-                        </Button>
-                      </div>
-                      <pre className="text-xs text-foreground overflow-x-auto">
-                        {JSON.stringify(payload, null, 2)}
-                      </pre>
-                    </div>
-                  </div>
-                ))}
+              <div className="code-editor bg-code-bg animate-fade-in">
+                <pre className="text-sm text-foreground overflow-x-auto">
+                  {JSON.stringify({ payloads: generatedPayloads }, null, 2)}
+                </pre>
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center h-[400px] text-center">
