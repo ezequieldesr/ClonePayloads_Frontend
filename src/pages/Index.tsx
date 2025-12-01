@@ -73,8 +73,7 @@ const Index = () => {
         throw new Error("O timestamp deve estar no formato ISO-8601");
       }
 
-      // Simulate API call (replace with your actual endpoint)
-      const response = await fetch("/api/generate", {
+      const response = await fetch("https://clonepayloads.onrender.com/api/generate", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
