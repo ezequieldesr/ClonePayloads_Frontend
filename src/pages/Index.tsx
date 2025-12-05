@@ -11,10 +11,13 @@ import { toast } from "sonner";
 import { Copy, Play, Zap, Code2, Clock } from "lucide-react";
 import { HowItWorks } from "@/components/HowItWorks";
 
+const MAX_PAYLOAD_FIELDS = 100;
+
 const formSchema = z.object({
   quantidade: z.coerce
     .number()
-    .min(2, "A quantidade tem que ser maior ou igual a 2"),
+    .min(2, "A quantidade tem que ser maior ou igual a 2")
+    .max(100, "A quantidade máxima permitida é 100"),
   payload: z.string().min(1, "O payload não pode estar vazio"),
 });
 
@@ -59,6 +62,11 @@ const Index = () => {
         parsedPayload = JSON.parse(data.payload);
       } catch {
         throw new Error("Formato JSON inválido");
+      }
+
+      // Validate payload field count
+      if (Object.keys(parsedPayload).length > MAX_PAYLOAD_FIELDS) {
+        throw new Error("A quantidade máxima de campos no payload é 100");
       }
 
       // Validate timestamp presence
