@@ -3,7 +3,19 @@
 ## Sobre 📖
 
 ClonePayload permite que você insira um payload JSON contendo um timestamp e gere múltiplas cópias com timestamps incrementados automaticamente. Ideal para testes de APIs, simulações de dados e geração de payloads em lote.
+
 ---
+
+## ⚠️ Uso Local (Importante!)
+
+Para rodar localmente:
+
+### ✔ Frontend deve rodar na porta **8080**  
+### ✔ Backend deve rodar na porta **8081**
+
+Sem isso o frontend não vai conseguir acessar a API do backend local.
+---
+
 ## Funcionalidades 📚
 
 - **Geração em lote**: Gere de 2 a 100 cópias de um payload JSON
