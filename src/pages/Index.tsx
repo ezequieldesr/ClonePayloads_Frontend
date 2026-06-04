@@ -224,9 +224,8 @@ const Index = () => {
             </div>
             <h1 className="font-display font-extrabold text-5xl md:text-6xl lg:text-7xl leading-[0.95] tracking-tighter">
               Gere <span className="gradient-text">100 payloads</span>
-              <br /> realistas em
               <br /> <span className="relative inline-block">
-                <span className="relative z-10">um clique<span className="blink-caret" /></span>
+                <span className="relative z-10">em um clique<span className="blink-caret" /></span>
                 <span className="absolute -bottom-1 left-0 right-0 h-3 bg-primary/20 -z-0" />
               </span>
             </h1>
@@ -260,7 +259,6 @@ const Index = () => {
               {[
                 { v: "100", l: "clones / request" },
                 { v: "4", l: "strategies" },
-                { v: "<200ms", l: "latência média" },
               ].map((s) => (
                 <div key={s.l}>
                   <div className="font-display font-bold text-2xl text-foreground">{s.v}</div>
