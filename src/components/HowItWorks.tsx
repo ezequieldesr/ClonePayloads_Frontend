@@ -67,27 +67,33 @@ export const HowItWorks = () => {
 
   return (
     <section className="animate-fade-in" style={{ animationDelay: "0.2s" }}>
-      <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold mb-3 gradient-text">Como Funciona?</h2>
-        <p className="text-muted-foreground max-w-2xl mx-auto">
-          O ClonePayload é uma ferramenta para desenvolvedores que automatiza a criação de múltiplos
-          payloads JSON com timestamps incrementados, ideal para testes e simulações.
+      <div className="mb-10">
+        <div className="font-mono text-xs text-primary mb-2">// 02 · como funciona</div>
+        <h2 className="font-display text-3xl md:text-4xl font-bold tracking-tight mb-3">
+          Quatro passos, <span className="text-primary">zero atrito</span>
+        </h2>
+        <p className="text-muted-foreground max-w-2xl">
+          Cole, configure, dispare, copie. Pensado pra ser parte da rotina de quem testa APIs,
+          simula eventos e popula bases todo dia.
         </p>
       </div>
 
-      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
         {steps.map((step, index) => {
           const Icon = step.icon;
           return (
             <Card
               key={index}
-              className="p-6 bg-card border-border hover:border-primary/50 transition-all duration-300 hover:-translate-y-1"
+              className="p-6 bg-card/60 backdrop-blur border-border hover:border-primary/60 hover:bg-card transition-all duration-300 hover:-translate-y-1 group relative overflow-hidden"
             >
-              <div className="flex flex-col items-center text-center space-y-3">
-                <div className={`p-3 bg-secondary rounded-lg ${step.color}`}>
-                  <Icon className="w-6 h-6" />
+              <div className="absolute -top-6 -right-6 font-display font-extrabold text-[6rem] leading-none text-primary/5 group-hover:text-primary/10 transition-colors select-none">
+                0{index + 1}
+              </div>
+              <div className="flex flex-col space-y-3 relative">
+                <div className={`p-2.5 bg-secondary/60 rounded-md w-fit ${step.color} border border-border`}>
+                  <Icon className="w-5 h-5" />
                 </div>
-                <h3 className="font-semibold text-foreground">{step.title}</h3>
+                <h3 className="font-display font-bold text-foreground">{step.title}</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   {step.description}
                 </p>
@@ -98,21 +104,25 @@ export const HowItWorks = () => {
       </div>
 
       {/* Strategies */}
-      <Card className="p-6 bg-card border-border mb-6">
-        <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
-          <Settings2 className="w-5 h-5 text-primary" />
-          Strategies Disponíveis
-        </h3>
+      <div id="strategies" />
+      <Card className="p-6 md:p-8 bg-card/60 backdrop-blur border-border mb-6">
+        <div className="flex items-end justify-between mb-6 flex-wrap gap-2">
+          <div>
+            <div className="font-mono text-xs text-primary mb-1">// strategies</div>
+            <h3 className="font-display text-2xl font-bold">As 4 ferramentas do toolkit</h3>
+          </div>
+          <span className="font-mono text-xs text-muted-foreground">enum FieldStrategy</span>
+        </div>
         <div className="grid md:grid-cols-2 gap-4">
           {strategies.map((s, i) => {
             const Icon = s.icon;
             return (
-              <div key={i} className="flex items-start gap-3 p-4 bg-secondary rounded-lg border border-border">
-                <div className={`p-2 bg-background rounded-md ${s.color} flex-shrink-0`}>
+              <div key={i} className="flex items-start gap-3 p-4 bg-secondary/40 rounded-lg border border-border hover:border-primary/40 transition-colors">
+                <div className={`p-2 bg-background rounded-md ${s.color} flex-shrink-0 border border-border`}>
                   <Icon className="w-5 h-5" />
                 </div>
                 <div>
-                  <code className="text-sm font-semibold text-primary">{s.name}</code>
+                  <code className="text-sm font-bold text-primary">{s.name}</code>
                   <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{s.description}</p>
                 </div>
               </div>
@@ -122,16 +132,19 @@ export const HowItWorks = () => {
       </Card>
 
       {/* Validation Rules */}
-      <Card className="p-6 bg-card border-border">
-        <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+      <Card className="p-6 md:p-8 bg-card/60 backdrop-blur border-border">
+        <div className="flex items-end justify-between mb-6 flex-wrap gap-2">
+          <div>
+            <div className="font-mono text-xs text-primary mb-1">// validações</div>
+            <h3 className="font-display text-2xl font-bold">Regras que o backend impõe</h3>
+          </div>
           <AlertCircle className="w-5 h-5 text-accent" />
-          Regras de Validação
-        </h3>
+        </div>
         <div className="grid md:grid-cols-2 gap-4">
           {validationRules.map((item, index) => (
             <div
               key={index}
-              className="flex items-start gap-3 p-4 bg-secondary rounded-lg border border-border"
+              className="flex items-start gap-3 p-4 bg-secondary/40 rounded-lg border border-border"
             >
               <div className="w-2 h-2 bg-accent rounded-full mt-2 flex-shrink-0" />
               <div>
@@ -146,8 +159,9 @@ export const HowItWorks = () => {
       </Card>
 
       {/* Example Section */}
-      <Card className="p-6 bg-card border-border mt-6">
-        <h3 className="text-xl font-semibold mb-4">Exemplo de Uso</h3>
+      <Card className="p-6 md:p-8 bg-card/60 backdrop-blur border-border mt-6">
+        <div className="font-mono text-xs text-primary mb-1">// exemplo</div>
+        <h3 className="font-display text-2xl font-bold mb-2">Tudo junto</h3>
         <p className="text-sm text-muted-foreground mb-4">
           Combine múltiplas strategies em um único request para gerar variações ricas a partir de um payload base.
         </p>
