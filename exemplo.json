@@ -1,0 +1,23 @@
+
+// Sem o ClonePayloads
+{ 
+    "name": "Eduardo",
+    "timestamp": "2025-12-04T15:40:12.487Z" 
+    //...
+},{
+    "name": "Evandro",
+    "timestamp": "2025-12-04T15:40:12.488Z"
+     //... 
+}
+
+// Com o ClonePayloads
+{ 
+    "name": "Eduardo",
+    "timestamp": "2025-12-04T15:40:12.487Z" 
+    //...
+},{
+    "name": "Evandro",
+    "timestamp": "2025-12-04T15:40:12.488Z"
+     //... 
+}
+
