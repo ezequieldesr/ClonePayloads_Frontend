@@ -2,7 +2,11 @@
 
 ## Sobre 📖
 
-ClonePayload permite que você insira um payload JSON contendo um timestamp e gere múltiplas cópias com timestamps incrementados automaticamente. Ideal para testes de APIs, simulações de dados e geração de payloads em lote.
+ClonePayload é uma ferramenta web para geração automática de payloads JSON.
+
+A partir de um único payload, é possível gerar até 100 clones aplicando estratégias específicas por campo.
+
+Ideal para testes de APIs, simulação de eventos, geração de massa de dados e cenários de carga.
 
 ---
 
@@ -10,53 +14,150 @@ ClonePayload permite que você insira um payload JSON contendo um timestamp e ge
 
 Para rodar localmente:
 
-### ✔ Frontend deve rodar na porta **8080**  
-### ✔ Backend deve rodar na porta **8081**
+### ✔ Frontend deve rodar na porta 8080
+### ✔ Backend deve rodar na porta 8081
 
-Sem isso o frontend não vai conseguir acessar a API do backend local.
+Sem isso o frontend não conseguirá acessar a API local.
+
 ---
 
 ## Funcionalidades 📚
 
-- **Geração em lote**: Gere de 2 a 100 cópias de um payload JSON
-- **Incremento automático de timestamps**: Cada payload gerado tem seu timestamp incrementado
-- **Validação em tempo real**: Validação instantânea de JSON e regras de negócio
-- **Interface moderna**: Design inspirado em JWT.io com tema escuro
-- **Copiar com um clique**: Copie toda a resposta JSON para a área de transferência
+- Geração de até 100 payloads por requisição
+- Configuração de estratégias por campo
+- Detecção automática de campos do JSON
+- Playground em tempo real
+- Validação instantânea
+- Copiar resultado com um clique
+- Interface responsiva
+
 ---
+
+## Estratégias Disponíveis 🚀
+
+### TIMESTAMP_INCREMENT
+
+Incrementa timestamps ISO-8601.
+
+### NUMERIC_INCREMENT
+
+Incrementa valores numéricos.
+
+### UUID
+
+Gera UUIDs únicos.
+
+### FIXED_VALUES
+
+Rotaciona valores definidos pelo usuário.
+
+---
+
 ## Regras de Validação 🚨
 
-| Campo | Regra | Mensagem de Erro |
-|-------|-------|------------------|
-| Quantidade | Mínimo: 2 | "A quantidade tem que ser maior ou igual a 2" |
-| Quantidade | Máximo: 100 | "A quantidade máxima permitida é 100" |
-| Payload | Obrigatório | "O payload não pode ser nulo/vazio" |
-| Payload | Máximo: 100 campos | "A quantidade máxima de campos no payload é 100" |
-| Timestamp | Obrigatório | "O timestamp tem que estar presente no payload" |
-| Timestamp | Formato ISO-8601 | "O timestamp deve estar no formato ISO-8601" |
+| Campo | Regra |
+|---------|---------|
+| Quantidade | Mínimo: 2 |
+| Quantidade | Máximo: 100 |
+| Payload | Obrigatório |
+| Payload | Máximo: 100 campos |
+| TIMESTAMP_INCREMENT | ISO-8601 obrigatório |
+| NUMERIC_INCREMENT | Campo numérico |
+| UUID | Campo String |
+| FIXED_VALUES | Lista não vazia |
+
 ---
+
 ## Tecnologias ⚙️
 
 ### Frontend
-- **React + TypeScript**
-- **Tailwind CSS**
-- **Shadcn/ui**
-- **React Hook Form + Zod**
+
+- React
+- TypeScript
+- Tailwind CSS
+- Shadcn/ui
+- React Hook Form
+- Zod
+- Vite
 
 ---
 
 ## Desenvolvimento Local 📂
 
 ```bash
-# Clonar o projeto do github
 git clone https://github.com/ezequieldesr/ClonePayloads_Frontend.git
 
-# Abrir o projeto
 cd ClonePayloads_Frontend
 
-# Instalar dependências
 npm install
 
-# Iniciar servidor de desenvolvimento
 npm run dev
 ```
+
+Aplicação disponível em:
+
+```bash
+http://localhost:8080
+```
+
+Backend esperado:
+
+```bash
+http://localhost:8081/api/generate
+```
+
+---
+
+## Como utilizar
+
+### 1. Cole um payload JSON
+
+```json
+{
+  "userId": "abc",
+  "score": 10,
+  "timestamp": "2025-12-04T15:40:12.487Z"
+}
+```
+
+### 2. Detecte os campos
+
+Clique em:
+
+```text
+Detectar Campos e Configurar Regras
+```
+
+### 3. Escolha as estratégias
+
+Exemplo:
+
+```text
+userId → UUID
+
+score → NUMERIC_INCREMENT
+
+timestamp → TIMESTAMP_INCREMENT
+```
+
+### 4. Defina a quantidade
+
+```text
+2 até 100 clones
+```
+
+### 5. Gere os payloads
+
+A resposta será exibida em tempo real.
+
+---
+
+## 🌐 Projeto Online
+
+Frontend:
+
+https://clone-payloads.vercel.app
+
+Backend:
+
+https://clonepayloads.onrender.com/api/generate
