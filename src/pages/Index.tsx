@@ -31,6 +31,10 @@ const formSchema = z.object({
 
 type FormData = z.infer<typeof formSchema>;
 
+interface ImportMetaEnv {
+  readonly VITE_API_URL: string;
+}
+
 interface FieldRule {
   field: string;
   strategy: string;
@@ -47,7 +51,7 @@ const Index = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [detectedFields, setDetectedFields] = useState<string[] | null>(null);
   const [fieldConfigs, setFieldConfigs] = useState<Record<string, FieldConfig>>({});
-
+  const apiUrl = import.meta.env.VITE_API_URL;
   const {
     register,
     handleSubmit,
@@ -143,7 +147,7 @@ const Index = () => {
         }
       }
 
-      const response = await fetch("https://clonepayloads.onrender.com/api/generate", {
+      const response = await fetch(`${apiUrl}/api/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
