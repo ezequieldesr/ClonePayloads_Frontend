@@ -1,0 +1,95 @@
+name: Full stack integration
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  e2e:
+    name: Playwright with API
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      VITE_API_URL: /
+      API_PROXY_TARGET: http://127.0.0.1:8081
+      E2E_BASE_URL: http://127.0.0.1:8080
+      PORT: '8081'
+      CORS_ALLOWED_ORIGINS: http://127.0.0.1:8080
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ezequieldesr/ClonePayloads_Backend
+          ref: main
+          path: .ci-backend
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+          cache: npm
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: mvn -B -ntp -f .ci-backend/pom.xml -DskipTests package
+      - run: npm run build
+      - name: Run API and browser scenarios
+        shell: bash
+        run: |
+          set -euo pipefail
+          logs_dir=$(mktemp -d)
+          api_pid=''
+          ui_pid=''
+          cleanup() {
+            for pid in "$api_pid" "$ui_pid"; do
+              if [ -n "$pid" ]; then kill "$pid" 2>/dev/null || true; fi
+            done
+            rm -rf -- "$logs_dir"
+          }
+          trap cleanup EXIT
+          startup_log() {
+            # Only startup output, before any browser payload is submitted.
+            tail -n 80 "$1" | sed -E '/password|secret|token|authorization|credential|api[_-]?key|jdbc:/Id'
+          }
+          mapfile -t jars < <(find .ci-backend/target -maxdepth 1 -type f -name 'ClonePayloads-*.jar' ! -name '*-sources.jar' ! -name '*-javadoc.jar')
+          if [ "${#jars[@]}" -ne 1 ]; then
+            echo 'Expected exactly one executable backend JAR.'
+            exit 1
+          fi
+          jar_name=$(basename "${jars[0]}")
+          echo "Backend commit: $(git -C .ci-backend rev-parse HEAD)"
+          (
+            cd .ci-backend
+            exec java -jar "target/$jar_name" --server.address=127.0.0.1 --server.port=8081 --debug=false
+          ) > "$logs_dir/api.log" 2>&1 &
+          api_pid=$!
+          npm run preview -- --host 127.0.0.1 --port 8080 --strictPort > "$logs_dir/ui.log" 2>&1 &
+          ui_pid=$!
+          wait_for_service() {
+            local url="$1" pid="$2" log="$3" code=''
+            for attempt in $(seq 1 60); do
+              if ! kill -0 "$pid" 2>/dev/null; then
+                echo "::error::Service process exited before becoming ready: $url"
+                startup_log "$log"
+                return 1
+              fi
+              code=$(curl --silent --output /dev/null --write-out '%{http_code}' --connect-timeout 1 --max-time 3 "$url") || true
+              if [ "$code" = 200 ]; then return 0; fi
+              sleep 2
+            done
+            echo "::error::Service not ready: $url (last HTTP status: $code)"
+            startup_log "$log"
+            return 1
+          }
+          wait_for_service http://127.0.0.1:8081/api/health "$api_pid" "$logs_dir/api.log"
+          wait_for_service http://127.0.0.1:8080 "$ui_pid" "$logs_dir/ui.log"
+          npm run test:e2e
+      # Never upload payloads, traces or logs as public artifacts by default.

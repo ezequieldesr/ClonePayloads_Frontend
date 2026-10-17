@@ -1,0 +1,21 @@
+{
+  "recordedAt": "2026-10-16T15:14:57.921Z",
+  "tests": [
+    {
+      "name": "API: limites de quantidade, campos, bytes e regras",
+      "passed": true
+    },
+    {
+      "name": "Jornada: quatro estratégias e cópia de JSON real",
+      "passed": true
+    },
+    {
+      "name": "Validações visíveis: JSON, campos e regras inválidas",
+      "passed": true
+    },
+    {
+      "name": "Celular: navegação e configuração sem overflow",
+      "passed": true
+    }
+  ]
+}

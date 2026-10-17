@@ -1,163 +1,180 @@
-# ClonePayload
+<div align="center">
 
-## Sobre 📖
+# ClonePayloads · Frontend
 
-ClonePayload é uma ferramenta web para geração automática de payloads JSON.
+**Transforme um JSON em dados de teste com regras por campo.**
 
-A partir de um único payload, é possível gerar até 100 clones aplicando estratégias específicas por campo.
+![React](https://img.shields.io/badge/React-18-149eca?logo=react)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178c6?logo=typescript)
+![Vite](https://img.shields.io/badge/Vite-8-646cff?logo=vite)
+[![CI](https://github.com/ezequieldesr/ClonePayloads_Frontend/actions/workflows/ci.yml/badge.svg)](https://github.com/ezequieldesr/ClonePayloads_Frontend/actions/workflows/ci.yml)
 
-Ideal para testes de APIs, simulação de eventos, geração de massa de dados e cenários de carga.
+[Demonstração](#demonstração) · [Executar](#executar-localmente) · [Testes](#testes-e-gravação) · [API Java](https://github.com/ezequieldesr/ClonePayloads_Backend)
 
----
+</div>
 
-## ⚠️ Uso Local (Importante!)
+## O projeto
 
-Para rodar localmente:
+Ferramenta web para gerar de **2 a 100 variações de um payload JSON**, escolhendo uma estratégia por campo.
+Ajuda a preparar exemplos de eventos, massas de dados e fixtures para testes de APIs.
+O frontend React/TypeScript se conecta a uma API própria em Java 21 e Spring Boot 4.
+**Não precisa de banco de dados.** Não executa testes de carga nem publica eventos no Kafka.
 
-### ✔ Frontend deve rodar na porta 8080
-### ✔ Backend deve rodar na porta 8081
+## Demonstração
 
-Sem isso o frontend não conseguirá acessar a API local.
+[![Prévia real do ClonePayloads — clique para ver o vídeo](docs/demo/preview.gif)](docs/demo/clonepayloads-demo.mp4)
 
----
+**[▶ Vídeo em PT-BR: da entrada ao JSON gerado](docs/demo/clonepayloads-demo.mp4)** ·
+[Versão WebM](docs/demo/clonepayloads-demo.webm) · [Roteiro](docs/ROTEIRO-DEMONSTRACAO.md)
 
-## Funcionalidades 📚
+Gravado por Playwright contra a API real local, sem respostas simuladas. Vídeo sem narração, com legendas de etapas.
+Os arquivos ficam disponíveis no GitHub após enviar os anexos deste repositório.
 
-- Geração de até 100 payloads por requisição
-- Configuração de estratégias por campo
-- Detecção automática de campos do JSON
-- Playground em tempo real
-- Validação instantânea
-- Copiar resultado com um clique
-- Interface responsiva
+<details>
+<summary><strong>📷 Abrir galeria</strong></summary>
 
----
+![Playground com as regras de cada campo](docs/demo/03-regras.png)
+![Resultado real com três variações](docs/demo/04-resultado.png)
+![Validação de entrada incompatível](docs/demo/07-validacao.png)
 
-## Estratégias Disponíveis 🚀
+</details>
 
-### TIMESTAMP_INCREMENT
+## Funcionalidades
 
-Incrementa timestamps ISO-8601.
+| Recurso | Comportamento |
+| --- | --- |
+| Entrada JSON | Objeto não vazio, até 100 campos de primeiro nível |
+| Detecção | Lista campos e sugere incremento para timestamp |
+| TIMESTAMP_INCREMENT | Soma +1ms, +2ms, +3ms… a uma string ISO-8601 |
+| NUMERIC_INCREMENT | Soma +1, +2, +3… preservando decimais |
+| UUID | Cria um UUID diferente por cópia em campo String |
+| FIXED_VALUES | Alterna circularmente os valores de uma lista |
+| Não modificar | Preserva o valor original do campo |
+| Resultado | Array real da API, formatado e copiável |
+| Validação | Erros de JSON, quantidade, regra, tipos e listas vazias |
+| Disponibilidade | Consulta GET /api/health; não é um indicador estático |
 
-### NUMERIC_INCREMENT
+Editar o JSON invalida as regras detectadas para evitar aplicar configurações de uma entrada anterior.
+A API também impõe os limites: o frontend não é a única barreira de validação.
 
-Incrementa valores numéricos.
+## Arquitetura
 
-### UUID
+```mermaid
+flowchart LR
+    User[Usuário] --> UI[React + Vite :8080]
+    UI -->|/api no proxy local| API[Spring Boot :8081]
+    API --> Rules[Validação e geração de JSON]
+    Rules --> UI
+```
 
-Gera UUIDs únicos.
+Não há login, banco, carrinho nem persistência de payloads. São recursos que não se aplicam a esta ferramenta.
+A resposta permanece na aba; não utilize informações confidenciais ou dados reais de clientes.
 
-### FIXED_VALUES
+## Executar localmente
 
-Rotaciona valores definidos pelo usuário.
-
----
-
-## Regras de Validação 🚨
-
-| Campo | Regra |
-|---------|---------|
-| Quantidade | Mínimo: 2 |
-| Quantidade | Máximo: 100 |
-| Payload | Obrigatório |
-| Payload | Máximo: 100 campos |
-| TIMESTAMP_INCREMENT | ISO-8601 obrigatório |
-| NUMERIC_INCREMENT | Campo numérico |
-| UUID | Campo String |
-| FIXED_VALUES | Lista não vazia |
-
----
-
-## Tecnologias ⚙️
-
-### Frontend
-
-- React
-- TypeScript
-- Tailwind CSS
-- Shadcn/ui
-- React Hook Form
-- Zod
-- Vite
-
----
-
-## Desenvolvimento Local 📂
+Requisitos: **Node.js 24**, npm, **Java 21** e Maven 3.9+ ou o wrapper incluído no backend.
 
 ```bash
+git clone https://github.com/ezequieldesr/ClonePayloads_Backend.git
 git clone https://github.com/ezequieldesr/ClonePayloads_Frontend.git
+```
 
+**Terminal 1 — backend:**
+
+```bash
+cd ClonePayloads_Backend
+mvn spring-boot:run
+```
+
+A API usa 8081 por padrão. Se houver `.env` ou variáveis de ambiente existentes, confira se `PORT=8081`.
+Não é preciso criar um banco. Consulte o [README da API](https://github.com/ezequieldesr/ClonePayloads_Backend).
+
+**Terminal 2 — frontend:**
+
+```bash
 cd ClonePayloads_Frontend
+npm ci
+```
 
-npm install
+Copie `.env.example` para **`.env.local`**. No PowerShell:
 
+```powershell
+Copy-Item .env.example .env.local
+```
+
+No Linux/macOS: `cp .env.example .env.local`.
+
+```dotenv
+VITE_API_URL=/
+API_PROXY_TARGET=http://127.0.0.1:8081
+```
+
+```bash
 npm run dev
 ```
 
-Aplicação disponível em:
+Abra **http://127.0.0.1:8080**. `strictPort` impede trocar de porta silenciosamente.
+O Vite encaminha `/api` ao backend em desenvolvimento e preview. `.env.local` tem precedência sobre `.env`;
+reinicie o Vite após alterar configurações. **VITE_* é público no bundle: nunca coloque segredos nessas variáveis.**
+
+<details>
+<summary><strong>Usar diretamente uma API hospedada</strong></summary>
+
+Defina `VITE_API_URL=https://seu-backend` antes de gerar o build. Não inclua `/api` no final.
+Configure `CORS_ALLOWED_ORIGINS` no backend com a origem exata do frontend.
+O proxy local usa `API_PROXY_TARGET`; um site estático publicado não executa o servidor Vite.
+
+Para a Vercel, `vercel.json` encaminha `/api/*` ao endereço já utilizado pelo projeto,
+`https://clonepayloads.onrender.com`, e fornece fallback da SPA.
+Mantenha `VITE_API_URL=/` para usar esse proxy. Se mudar o backend, altere o destino do rewrite.
+Envie primeiro o backend atualizado: ele precisa disponibilizar `/api/health` e o contrato documentado.
+
+</details>
+
+## Testes e gravação
 
 ```bash
-http://localhost:8080
+npm run lint
+npm run typecheck
+npm run build
+npm audit --audit-level high
+npx playwright install chromium
 ```
 
-Backend esperado:
+Com a API ligada, execute `npm run preview` em um terminal. Em outro:
 
 ```bash
-http://localhost:8081/api/generate
+npm run test:e2e
+npm run demo:record
+npm run test:e2e:report
 ```
 
----
+Quatro cenários cobrem a jornada das quatro estratégias e cópia, validações na interface,
+limites da API e uso em celular 390×844. [Evidência resumida](docs/demo/verification.json).
+Os testes não usam a API pública; confira suas variáveis antes de executá-los.
 
-## Como utilizar
+Para gerar MP4 e GIF com FFmpeg instalado: `npm run demo:export`.
+`FFMPEG_PATH` pode apontar para o executável. O Playwright gera WebM sem instalação separada de FFmpeg.
+Traces e relatórios podem conter os dados testados e ficam fora do Git.
 
-### 1. Cole um payload JSON
+## Integração contínua
 
-```json
-{
-  "userId": "abc",
-  "score": 10,
-  "timestamp": "2025-12-04T15:40:12.487Z"
-}
-```
+CI executa lint, TypeScript, build e auditoria npm; outro workflow inicia a API e executa Playwright.
+CodeQL e Dependency Review complementam a análise; Dependabot propõe atualizações semanais.
+Actions fixadas por SHA e sem deploy automático. [Checks e limites de segurança](docs/CI-SEGURANCA.md).
+O teste integrado usa a main pública do backend, não um PR ainda não integrado.
 
-### 2. Detecte os campos
-
-Clique em:
+## Estrutura
 
 ```text
-Detectar Campos e Configurar Regras
+src/pages/Index.tsx       Playground e integração com a API
+src/components/          Interface e explicação das estratégias
+e2e/                     Testes reais com navegador e API
+scripts/                 Gravação e exportação
+docs/demo/               Vídeo, capturas e evidência resumida
+vite.config.ts           Proxy local e configuração do Vite
+.github/workflows/       CI, E2E, CodeQL e Dependency Review
 ```
 
-### 3. Escolha as estratégias
-
-Exemplo:
-
-```text
-userId → UUID
-
-score → NUMERIC_INCREMENT
-
-timestamp → TIMESTAMP_INCREMENT
-```
-
-### 4. Defina a quantidade
-
-```text
-2 até 100 clones
-```
-
-### 5. Gere os payloads
-
-A resposta será exibida em tempo real.
-
----
-
-## 🌐 Projeto Online
-
-Frontend:
-
-https://clone-payloads.vercel.app
-
-Backend:
-
-https://clonepayloads.onrender.com/api/generate
+Projeto desenvolvido entre junho e julho de 2026, com preparação de testes, documentação e demonstração em outubro de 2026.
+[Autor: Ezequiel](https://github.com/ezequieldesr).
