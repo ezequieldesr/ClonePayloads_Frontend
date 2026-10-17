@@ -1,0 +1,62 @@
+name: Full stack integration
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  e2e:
+    name: Playwright with API
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      VITE_API_URL: /
+      API_PROXY_TARGET: http://127.0.0.1:8081
+      E2E_BASE_URL: http://127.0.0.1:8080
+      PORT: '8081'
+      CORS_ALLOWED_ORIGINS: http://127.0.0.1:8080
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ezequieldesr/ClonePayloads_Backend
+          ref: main
+          path: .ci-backend
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+          cache: npm
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: mvn -B -ntp -f .ci-backend/pom.xml -DskipTests package
+      - run: npm run build
+      - name: Run API and browser scenarios
+        shell: bash
+        run: |
+          set -euo pipefail
+          java -jar .ci-backend/target/ClonePayloads-*.jar --server.address=127.0.0.1 > /tmp/clone-api.log 2>&1 &
+          api_pid=$!
+          npm run preview > /tmp/clone-ui.log 2>&1 &
+          ui_pid=$!
+          trap 'kill "$api_pid" "$ui_pid" 2>/dev/null || true' EXIT
+          for url in http://127.0.0.1:8081/api/health http://127.0.0.1:8080; do
+            ready=false
+            for attempt in $(seq 1 60); do
+              if curl --fail --silent "$url" >/dev/null; then ready=true; break; fi
+              sleep 2
+            done
+            if [ "$ready" != true ]; then echo "Service not ready: $url"; exit 1; fi
+          done
+          npm run test:e2e
+      # Never upload payloads, traces or logs as public artifacts by default.

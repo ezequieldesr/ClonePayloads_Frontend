@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -24,6 +24,7 @@ const STRATEGIES = [
 const formSchema = z.object({
   quantidade: z.coerce
     .number()
+    .int("A quantidade precisa ser inteira")
     .min(2, "A quantidade tem que ser maior ou igual a 2")
     .max(100, "A quantidade máxima permitida é 100"),
   payload: z.string().min(1, "O payload não pode estar vazio"),
@@ -47,11 +48,19 @@ interface FieldConfig {
 }
 
 const Index = () => {
-  const [generatedPayloads, setGeneratedPayloads] = useState<Record<string, any>[] | null>(null);
+  const [generatedPayloads, setGeneratedPayloads] = useState<Record<string, unknown>[] | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [detectedFields, setDetectedFields] = useState<string[] | null>(null);
   const [fieldConfigs, setFieldConfigs] = useState<Record<string, FieldConfig>>({});
-  const apiUrl = import.meta.env.VITE_API_URL;
+  const apiUrl = (import.meta.env.VITE_API_URL || "").replace(/\/+$/, "");
+  const [apiStatus, setApiStatus] = useState("Verificando API");
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch(`${apiUrl}/api/health`, { signal: controller.signal })
+      .then(async r => { const data = await r.json(); setApiStatus(r.ok && data.status === "UP" ? "API disponível" : "API indisponível"); })
+      .catch(() => { if (!controller.signal.aborted) setApiStatus("API indisponível"); });
+    return () => controller.abort();
+  }, [apiUrl]);
   const {
     register,
     handleSubmit,
@@ -78,6 +87,8 @@ const Index = () => {
     const raw = getValues("payload");
     try {
       const parsed = JSON.parse(raw);
+      if (!parsed || Array.isArray(parsed) || typeof parsed !== "object") throw new Error("O payload precisa ser um objeto JSON");
+      setGeneratedPayloads(null);
       if (Object.keys(parsed).length > MAX_PAYLOAD_FIELDS) {
         toast.error("A quantidade máxima de campos no payload é 100");
         return;
@@ -114,17 +125,19 @@ const Index = () => {
     setGeneratedPayloads(null);
 
     try {
-      let parsedPayload: Record<string, any>;
+      let parsedPayload: Record<string, unknown>;
       try {
         parsedPayload = JSON.parse(data.payload);
       } catch {
         throw new Error("Formato JSON inválido");
       }
 
+      if (!parsedPayload || Array.isArray(parsedPayload) || typeof parsedPayload !== "object") throw new Error("O payload precisa ser um objeto JSON");
       if (Object.keys(parsedPayload).length > MAX_PAYLOAD_FIELDS) {
         throw new Error("A quantidade máxima de campos no payload é 100");
       }
 
+      if (!detectedFields) throw new Error("Detecte os campos e configure as regras antes de gerar");
       // Monta fieldRoles ignorando campos com strategy NONE
       const fieldRoles: FieldRule[] = [];
       if (detectedFields) {
@@ -153,29 +166,31 @@ const Index = () => {
         body: JSON.stringify({
           quantidade: data.quantidade,
           payload: parsedPayload,
-          fieldRoles: fieldRoles.length > 0 ? fieldRoles : undefined,
+          fieldRoles,
         }),
       });
 
+      setApiStatus("API disponível");
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || error.message || "Erro ao gerar payloads");
+        throw new Error(error.error || error.message || Object.values(error).join(" ") || "Erro ao gerar payloads");
       }
 
       // Backend agora retorna array direto (sem wrapper "payloads")
-      const result: Record<string, any>[] = await response.json();
+      const result: Record<string, unknown>[] = await response.json();
       setGeneratedPayloads(result);
       toast.success(`${result.length} payloads gerados com sucesso!`);
-    } catch (error: any) {
-      toast.error(error.message || "Erro ao processar a requisição");
+    } catch (error: unknown) {
+      if (error instanceof TypeError) setApiStatus("API indisponível");
+      toast.error(error instanceof Error ? error.message : "Erro ao processar a requisição");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    toast.success("Copiado para a área de transferência!");
+  const copyToClipboard = async (text: string) => {
+    try { await navigator.clipboard.writeText(text); toast.success("Copiado para a área de transferência!"); }
+    catch { toast.error("Não foi possível copiar. Selecione o resultado e copie manualmente."); }
   };
 
   const copyAllPayloads = () => {
@@ -208,11 +223,11 @@ const Index = () => {
           <nav className="hidden md:flex items-center gap-7 text-sm font-medium text-muted-foreground">
             <a href="#playground" className="hover:text-foreground transition-colors">Playground</a>
             <a href="#how" className="hover:text-foreground transition-colors">Como funciona</a>
-            <a href="#strategies" className="hover:text-foreground transition-colors">Strategies</a>
+            <a href="#strategies" className="hover:text-foreground transition-colors">Estratégias</a>
           </nav>
           <div className="flex items-center gap-2 text-xs font-mono">
             <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-primary/30 bg-primary/5 text-primary">
-              <CircleDot className="w-3 h-3 animate-pulse" /> API online
+              <CircleDot className="w-3 h-3 animate-pulse" /> {apiStatus}
             </span>
           </div>
         </div>
@@ -236,7 +251,7 @@ const Index = () => {
             <p className="text-lg text-muted-foreground max-w-xl leading-relaxed">
               Pare de copiar e colar JSON pra testar. ClonePayload duplica seu payload
               N vezes aplicando <code className="text-primary font-mono text-base">strategies</code> por campo —
-              timestamps incrementados, UUIDs únicos, valores em rotação. Pronto pra estressar suas APIs.
+              timestamps incrementados, UUIDs únicos, valores em rotação. Pronto para seus testes de API.
             </p>
             <div className="flex flex-wrap items-center gap-3">
               <Button
@@ -280,7 +295,7 @@ const Index = () => {
                 POST /api/generate
               </div>
               <div className="p-5 font-mono text-sm leading-relaxed">
-                <div className="text-muted-foreground"><span className="text-primary">$</span> curl clonepayloads.onrender.com</div>
+                <div className="text-muted-foreground"><span className="text-primary">$</span> POST /api/generate</div>
                 <pre className="mt-3 text-foreground/90 text-xs whitespace-pre-wrap">
 {`{
   "quantidade": `}<span className="text-accent">3</span>{`,
@@ -307,11 +322,11 @@ const Index = () => {
           <div className="marquee text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground">
             {Array.from({ length: 2 }).map((_, k) => (
               <div key={k} className="flex items-center gap-12 pr-12">
-                <span>⌁ load testing</span>
+                <span>⌁ dados de teste</span>
                 <span className="text-primary">TIMESTAMP_INCREMENT</span>
                 <span>⌁ event simulation</span>
                 <span className="text-primary">UUID</span>
-                <span>⌁ kafka producers</span>
+                <span>⌁ eventos JSON</span>
                 <span className="text-primary">NUMERIC_INCREMENT</span>
                 <span>⌁ qa fixtures</span>
                 <span className="text-primary">FIXED_VALUES</span>
@@ -334,7 +349,7 @@ const Index = () => {
             </p>
           </div>
           <div className="font-mono text-xs text-muted-foreground hidden md:block">
-            endpoint: <span className="text-primary">clonepayloads.onrender.com/api/generate</span>
+            endpoint: <span className="text-primary">/api/generate</span>
           </div>
         </div>
 
@@ -372,7 +387,7 @@ const Index = () => {
                   id="payload"
                   placeholder='{"timestamp": "2024-01-01T00:00:00.000Z", "data": "example"}'
                   className="code-editor min-h-[200px] resize-none"
-                  {...register("payload")}
+                  {...register("payload", { onChange: () => { setDetectedFields(null); setFieldConfigs({}); setGeneratedPayloads(null); } })}
                 />
                 {errors.payload && (
                   <p className="text-destructive text-sm font-mono">→ {errors.payload.message}</p>
@@ -400,6 +415,7 @@ const Index = () => {
                       <div className="flex items-center gap-3">
                         <span className="text-sm text-muted-foreground w-32 truncate font-mono">{field}</span>
                         <select
+                          aria-label={`Estratégia para ${field}`}
                           className="flex-1 text-sm bg-background border border-border rounded-md px-2 py-1 text-foreground"
                           value={fieldConfigs[field]?.strategy ?? "NONE"}
                           onChange={(e) => updateFieldStrategy(field, e.target.value)}
@@ -411,8 +427,9 @@ const Index = () => {
                       </div>
                       {fieldConfigs[field]?.strategy === "FIXED_VALUES" && (
                         <Input
+                          aria-label={`Valores fixos para ${field}`}
                           placeholder="alice, bob, carol"
-                          className="text-sm bg-background border-border ml-[140px]"
+                          className="text-sm bg-background border-border w-full"
                           value={fieldConfigs[field]?.fixedValues ?? ""}
                           onChange={(e) => updateFixedValues(field, e.target.value)}
                         />
@@ -468,7 +485,7 @@ const Index = () => {
 
             {generatedPayloads && generatedPayloads.length > 0 ? (
               <div className="p-5 max-h-[520px] overflow-auto animate-fade-in">
-                <pre className="text-sm text-foreground/90 font-mono leading-relaxed">
+                <pre data-testid="generated-result" className="text-sm text-foreground/90 font-mono leading-relaxed">
                   {JSON.stringify(generatedPayloads, null, 2)}
                 </pre>
               </div>
@@ -501,7 +518,7 @@ const Index = () => {
           <div className="flex items-center gap-2 font-mono text-sm">
             <Terminal className="w-4 h-4 text-primary" />
             <span className="text-foreground">clone_payload</span>
-            <span className="text-muted-foreground">© 2025</span>
+            <span className="text-muted-foreground">© 2026</span>
           </div>
           <div className="font-mono text-xs text-muted-foreground">
             built for devs who hate <span className="line-through">copy-paste</span>
